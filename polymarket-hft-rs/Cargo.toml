@@ -1,0 +1,51 @@
+[package]
+name = "polymarket-hft"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94.1"
+
+[dependencies]
+polymarket-client-sdk = { version = "0.4", features = ["clob", "gamma"] }
+alloy = { version = "1.6", features = ["signers", "sol-types"] }
+
+tokio = { version = "1", features = ["full"] }
+tokio-tungstenite = { version = "0.28", features = ["rustls-tls-native-roots"] }
+rustls = { version = "0.23", default-features = false, features = ["aws-lc-rs"] }
+futures-util = "0.3"
+
+simd-json = "0.14"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+rust_decimal = "1"
+rust_decimal_macros = "1"
+
+fred = { version = "9", features = ["subscriber-client"] }
+reqwest = { version = "0.13", features = ["json", "http2"] }
+hmac = "0.12"
+sha2 = "0.10"
+base64 = "0.22"
+
+clap = { version = "4", features = ["derive"] }
+dotenvy = "0.15"
+anyhow = "1"
+
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+chrono = "0.4"
+rand = "0.9"
+url = "2"
+
+[[bin]]
+name = "polymarket-hft"
+path = "src/main.rs"
+
+[[bin]]
+name = "telegram-relay"
+path = "src/bin/telegram_relay.rs"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
