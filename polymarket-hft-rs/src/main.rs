@@ -56,15 +56,11 @@ async fn main() -> anyhow::Result<()> {
     info!("  Shares: {} | Gap: {:.4}%", cli.shares, cli.gap_threshold_pct * 100.0);
     info!("  Max Price: ${:.2} | Window: {}-{}s", cli.max_price, cli.window_end, cli.window_start);
     info!("  Reserve: ${:.2} | Daily Loss Limit: ${:.2}", cli.min_reserve, cli.daily_loss_limit);
-    info!("  Max Bankroll Fraction: {:.2}", cli.max_bankroll_fraction);
     info!("======================================================================");
 
     // Validate parameters
     if cli.window_end >= cli.window_start {
         anyhow::bail!("window_end must be < window_start");
-    }
-    if cli.max_bankroll_fraction <= 0.0 || cli.max_bankroll_fraction > 1.0 {
-        anyhow::bail!("max_bankroll_fraction must be > 0 and <= 1");
     }
 
     let api_config = ApiConfig::from_env()?;
@@ -159,7 +155,7 @@ async fn run_gap_loop(
 
     // Balance tracking (local accounting for accuracy)
     let mut balance = 0.0_f64;
-    if is_live && cli.max_bankroll_fraction > 0.0 {
+    if is_live {
         if let Some(c) = client {
             match c.balance_allowance(
                 polymarket_client_sdk::clob::types::request::BalanceAllowanceRequest::builder()
@@ -180,8 +176,6 @@ async fn run_gap_loop(
         } else {
             warn!("Client is None, cannot fetch balance");
         }
-    } else {
-        debug!("Skipping balance fetch (is_live={}, max_bankroll_fraction={})", is_live, cli.max_bankroll_fraction);
     }
 
     // Daily P&L tracking
@@ -561,7 +555,7 @@ async fn run_gap_loop(
             }
 
             // Reserve check (critical safety)
-            if is_live && cli.max_bankroll_fraction > 0.0 {
+            if is_live {
                 if balance <= 0.0 || (balance - order_value) < cli.min_reserve {
                     info!(
                         "Skip: Reason: balance={:.2}, order_value={:.2}, remaining={:.2}, min_reserve={:.2}",

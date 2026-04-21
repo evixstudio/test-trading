@@ -44,9 +44,6 @@ pub struct Cli {
     #[arg(long, default_value = "3.0", help = "Daily loss limit (USD)")]
     pub daily_loss_limit: f64,
 
-    #[arg(long, default_value = "0.5", help = "Max fraction of balance per trade")]
-    pub max_bankroll_fraction: f64,
-
     #[arg(long, default_value = "localhost", help = "Redis host")]
     pub redis_host: String,
 
