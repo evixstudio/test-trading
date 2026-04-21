@@ -285,45 +285,6 @@ impl Executor {
         (parse_order_response(result), latency)
     }
 
-    /// Aggressive dump for legging risk. FAK sell at deeply discounted price.
-    pub async fn market_sell(
-        &self,
-        fast_client: &FastOrderClient,
-        token_id: U256,
-        shares: f64,
-    ) -> OrderResult {
-        if self.dry_run {
-            return OrderResult {
-                success: true,
-                order_id: "dry_sell".into(),
-                error: String::new(),
-                raw_response: String::new(),
-                filled_price: 0.0,
-                filled_shares: shares,
-            };
-        }
-
-        let dump_price = f64::max(0.01, 1.02 / shares);
-        let dump_price = (dump_price * 100.0).ceil() / 100.0;
-
-        let order = build_limit_order(
-            self.maker_address,
-            self.signer_address,
-            token_id,
-            shares,
-            dump_price,
-            Side::Sell,
-            self.sig_type,
-        );
-
-        let owner = fast_client.owner;
-        let signed = match sign_order_local(&self.signer, order, OrderType::FAK, owner) {
-            Ok(s) => s,
-            Err(e) => return OrderResult::failed(format!("sign sell: {e}")),
-        };
-
-        parse_order_response(fast_client.post_order(&signed).await)
-    }
 }
 
 fn parse_post_response(

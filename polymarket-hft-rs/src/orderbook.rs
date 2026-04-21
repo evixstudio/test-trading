@@ -96,20 +96,21 @@ impl ShadowBook {
             return false;
         }
 
-        match best_ask {
-            Some("") | None => {
-                let already_empty = if is_up {
-                    self.up_asks.is_empty() && self.up_ask == 0.0 && self.up_ask_size == 0.0
-                } else {
-                    self.dn_asks.is_empty() && self.dn_ask == 0.0 && self.dn_ask_size == 0.0
-                };
-                if already_empty {
-                    return false;
-                }
-                if is_up { self.up_asks.clear(); } else { self.dn_asks.clear(); }
-                return self.recompute(is_up);
+        // Explicit empty-book signal from Polymarket (best_ask=""): clear the side.
+        // Missing field (None) is treated as "no top-of-book info" — ignore and
+        // rely on the delta itself (size=0 delete / size>0 update) below.
+        // Matches Nautilus behavior, which never uses best_ask for book maintenance.
+        if matches!(best_ask, Some("")) {
+            let already_empty = if is_up {
+                self.up_asks.is_empty() && self.up_ask == 0.0 && self.up_ask_size == 0.0
+            } else {
+                self.dn_asks.is_empty() && self.dn_ask == 0.0 && self.dn_ask_size == 0.0
+            };
+            if already_empty {
+                return false;
             }
-            _ => {}
+            if is_up { self.up_asks.clear(); } else { self.dn_asks.clear(); }
+            return self.recompute(is_up);
         }
 
         if !side.eq_ignore_ascii_case("SELL") {
