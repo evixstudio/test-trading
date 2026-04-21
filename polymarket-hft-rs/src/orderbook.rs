@@ -159,6 +159,24 @@ impl ShadowBook {
         true
     }
 
+    /// Sum of ask sizes for levels with price ≤ `max_price` on one side.
+    ///
+    /// Used by gap_engine to check fillable liquidity against the *actual*
+    /// worst-price cap (`winning_worst`), which may be tighter than the
+    /// cached `DEPTH_RANGE` window when the 0.60 cap engages.
+    #[inline]
+    pub fn depth_up_to(&self, is_up: bool, max_price: f64) -> f64 {
+        let asks = if is_up { &self.up_asks } else { &self.dn_asks };
+        if asks.is_empty() {
+            return 0.0;
+        }
+        let max_bps = price_to_bps(max_price);
+        asks.iter()
+            .filter(|&(&k, _)| k <= max_bps)
+            .map(|(_, &v)| v)
+            .sum()
+    }
+
     /// Recompute cached best-ask and total-depth from the internal HashMap.
     /// Returns `true` if either value changed meaningfully.
     fn recompute(&mut self, is_up: bool) -> bool {

@@ -14,7 +14,7 @@ use polymarket_client_sdk::clob::{Client, Config};
 use polymarket_client_sdk::types::{Address, U256};
 use polymarket_client_sdk::POLYGON;
 use rust_decimal::Decimal;
-use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
 use tracing::info;
 
 use crate::config::{
@@ -50,10 +50,15 @@ fn build_limit_order(
     side: Side,
     sig_type: SignatureType,
 ) -> Order {
-    let dec_size = Decimal::from_f64_retain(size)
+    // `from_f64` (not `from_f64_retain`) rounds to the shortest round-tripping
+    // representation, so `0.6_f64` becomes Decimal("0.6") instead of the raw
+    // binary expansion `0.5999999999999999778…`. Without this, a subsequent
+    // `trunc_with_scale(2)` would floor 0.60 → 0.59 (and 0.30 → 0.29 etc.),
+    // silently shipping orders 1 tick below the intended limit price.
+    let dec_size = Decimal::from_f64(size)
         .expect("valid f64")
         .trunc_with_scale(LOT_SIZE_SCALE);
-    let dec_price = Decimal::from_f64_retain(price)
+    let dec_price = Decimal::from_f64(price)
         .expect("valid f64")
         .trunc_with_scale(TICK_SIZE_DECIMALS);
 

@@ -1,0 +1,27 @@
+# Rust build artifacts
+/target/
+Cargo.lock
+
+# Environment variables (contains secrets)
+.env
+.env.local
+
+# Log files
+*.log
+dry_run.log
+dry_run_err.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup

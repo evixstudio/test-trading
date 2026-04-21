@@ -59,18 +59,20 @@ pub fn check_gap(
         return None;
     }
 
-    // Filter 6: Depth filter (enough liquidity within slippage range)
-    let winning_depth = if winning_id_up { book.up_ask_size } else { book.dn_ask_size };
+    // Apply fixed slippage (2 ticks), but cap at $0.60 max.
+    // Computed before the depth filter so depth can be checked against
+    // the *actual* fillable price range (cap may be tighter than +0.30).
+    let winning_worst = (winning_ask + SLIPPAGE_BUFFER).min(0.60);
+
+    // Filter 6: Depth filter — only count liquidity within the worst-price cap.
+    let winning_depth = book.depth_up_to(winning_id_up, winning_worst);
     if winning_depth < shares {
         info!(
-            "SKIP(depth): {} ask={:.4} depth={:.2} < required={:.1} | gap={:+.0}",
-            winning_side, winning_ask, winning_depth, shares, btc_gap,
+            "SKIP(depth): {} ask={:.4} worst={:.4} depth={:.2} < required={:.1} | gap={:+.0}",
+            winning_side, winning_ask, winning_worst, winning_depth, shares, btc_gap,
         );
         return None;
     }
-
-    // Apply fixed slippage (2 ticks), but cap at $0.60 max
-    let winning_worst = (winning_ask + SLIPPAGE_BUFFER).min(0.60);
 
     Some(GapSignal {
         side: winning_side,
